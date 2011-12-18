@@ -3395,10 +3395,6 @@ wysihtml5.browser = (function() {
       isWebKit    = userAgent.indexOf("AppleWebKit/") !== -1,
       isOpera     = userAgent.indexOf("Opera/")       !== -1;
   
-  function iOsVersion(userAgent) {
-    return (userAgent.match(/ OS (\d+).+? like Mac OS X/i) || [, 0])[1];
-  }
-  
   return {
     // Static variable needed, publicly accessible, to be able override it in unit tests
     USER_AGENT: userAgent,
@@ -3420,7 +3416,7 @@ wysihtml5.browser = (function() {
           // document selector apis are only supported by IE 8+, Safari 4+, Chrome and Firefox 3.5+
           hasQuerySelectorSupport     = document.querySelector && document.querySelectorAll,
           // contentEditable is unusable in mobile browsers (tested iOS 4.2.2, Android 2.2, Opera Mobile)
-          isIncompatibleMobileBrowser = (userAgent.indexOf("webkit") !== -1 && userAgent.indexOf("mobile") !== -1 && iOsVersion(userAgent) < 5) || userAgent.indexOf("opera mobi") !== -1;
+          isIncompatibleMobileBrowser = (userAgent.indexOf("webkit") !== -1 && userAgent.indexOf("mobile") !== -1) || userAgent.indexOf("opera mobi") !== -1;
 
       return hasContentEditableSupport
         && hasEditingApiSupport
@@ -4800,6 +4796,9 @@ wysihtml5.dom.parse = (function() {
     }
     oldNode._wysihtml5 = 1;
     
+    if (oldNode.className === "wysihtml5-temp") {
+      return null;
+    }
     
     /**
      * IE is the only browser who doesn't include the namespace in the
@@ -7131,7 +7130,7 @@ wysihtml5.views.View = Base.extend(
       ADDITIONAL_CSS_RULES = [
         "html             { height: 100%; }",
         "body             { min-height: 100%; padding: 0; margin: 0; margin-top: -1px; padding-top: 1px; }",
-        // "._wysihtml5-temp { display: none; }",
+        "._wysihtml5-temp { display: none; }",
         wysihtml5.browser.isGecko ?
           "body.placeholder { color: graytext !important; }" : 
           "body.placeholder { color: #a9a9a9 !important; }",
@@ -9070,8 +9069,8 @@ wysihtml5.commands = {
 })(wysihtml5);(function(wysihtml5) {
   var Z_KEY     = 90,
       Y_KEY     = 89,
-      UNDO_HTML = "<span id='_wysihtml5-undo' class='_wysihtml5-temp'>fooo</span>",
-      REDO_HTML = "<span id='_wysihtml5-redo' class='_wysihtml5-temp'>baaar</span>",
+      UNDO_HTML = '<span id="_wysihtml5-undo" class="_wysihtml5-temp">' + wysihtml5.INVISIBLE_SPACE + '</span>',
+      REDO_HTML = '<span id="_wysihtml5-redo" class="_wysihtml5-temp">' + wysihtml5.INVISIBLE_SPACE + '</span>',
       dom       = wysihtml5.dom;
   
   function cleanTempElements(doc) {
@@ -9092,6 +9091,8 @@ wysihtml5.commands = {
     _observe: function() {
       var that = this,
           doc = this.editor.composer.sandbox.getDocument();
+          
+      // Catch CTRL+Z and CTRL+Y
       dom.observe(this.composerElement, "keydown", function(event) {
         if (!event.ctrlKey && !event.metaKey) {
           return;
@@ -9115,32 +9116,40 @@ wysihtml5.commands = {
         clearInterval(interval);
       };
       
+      
+      // Now this is very hacky:
+      // These days browsers don't offer a undo/redo event which we could hook into
+      // to be notified when the user hits undo/redo in the contextmenu.
+      // Therefore we simply insert two elements as soon as the contextmenu gets opened.
+      // The last element being inserted will be immediately be removed again by a exexCommand("undo")
+      // => Now when the second element appears in the dom tree then we know the user clicked "redo" in the context menu
+      // => When the first element disappears in the dom tree then we know the user clicked "undo" in the context menu
       dom.observe(this.composerElement, "contextmenu", function() {
-        // cleanUp();
-        // setTimeout(function() {
-        //           doc.execCommand("insertHTML", false, "foo");
-        //         }, 0);
-        //         // doc.execCommand("insertHTML", "bar");
-        //         console.log("CONTEXT MENU 4");
-        return;
-        // doc.execCommand("undo");
+        cleanUp();
+        wysihtml5.selection.executeAndRestoreSimple(doc, function() {
+          if (that.composerElement.lastChild) {
+            wysihtml5.selection.setAfter(that.composerElement.lastChild);
+          }
+          doc.execCommand("insertHTML", false, UNDO_HTML);
+          doc.execCommand("insertHTML", false, REDO_HTML);
+          doc.execCommand("undo", false, null);
+        });
         
-        // interval = setInterval(function() {
-        //           console.log(doc.getElementById("_wysihtml5-redo"),doc.getElementById("_wysihtml5-undo"));
-        //           if (doc.getElementById("_wysihtml5-redo")) {
-        //             cleanUp();
-        //             that.redo();
-        //           } else if (!doc.getElementById("_wysihtml5-undo")) {
-        //             cleanUp();
-        //             that.undo();
-        //           }
-        //         }, 400);
-        //         
-        //         if (!observed) {
-        //           observed = true;
-        //           dom.observe(document, "mousedown", cleanUp);
-        //           dom.observe(doc, "mousedown", cleanUp);
-        //         }
+        interval = setInterval(function() {
+          if (doc.getElementById("_wysihtml5-redo")) {
+            cleanUp();
+            that.redo();
+          } else if (!doc.getElementById("_wysihtml5-undo")) {
+            cleanUp();
+            that.undo();
+          }
+        }, 400);
+        
+        if (!observed) {
+          observed = true;
+          dom.observe(document, "mousedown", cleanUp);
+          dom.observe(doc, ["mousedown", "paste", "cut", "copy"], cleanUp);
+        }
       });
       
     },
