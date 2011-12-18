@@ -152,6 +152,7 @@
 
       this._initAutoLinking();
       this._initObjectResizing();
+      this._initUndoManager();
 
       // Simulate html5 autofocus on contentEditable element
       if (this.textarea.element.hasAttribute("autofocus") || document.querySelector(":focus") == this.textarea.element) {
@@ -286,6 +287,10 @@
           dom.observe(element, "resizestart", function(event) { event.preventDefault(); });
         }
       }
+    },
+    
+    _initUndoManager: function() {
+      new wysihtml5.UndoManager(this.parent);
     }
   });
 })(wysihtml5);

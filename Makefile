@@ -68,6 +68,7 @@ JS_FILES = src/wysihtml5.js \
   src/commands/justifyLeft.js \
   src/commands/justifyRight.js \
   src/commands/underline.js \
+  src/undo_manager.js \
   src/editor.js
 
 all: bundle minify

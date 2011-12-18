@@ -162,5 +162,11 @@
     })
     .observe("newword:composer", function() {
       log.innerHTML += "<div>newword:composer</div>";
+    })
+    .observe("undo:composer", function() {
+      log.innerHTML += "<div>undo:composer</div>";
+    })
+    .observe("redo:composer", function() {
+      log.innerHTML += "<div>redo:composer</div>";
     });
 </script>

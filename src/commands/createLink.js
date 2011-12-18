@@ -27,7 +27,7 @@
 
   function _format(element, attributes) {
     var doc             = element.ownerDocument,
-        tempClass       = "_wysihtml5-temp-" + new Date().getTime(),
+        tempClass       = "_wysihtml5-temp-" + (+new Date()),
         tempClassRegExp = /non-matching-class/g,
         i               = 0,
         length,
