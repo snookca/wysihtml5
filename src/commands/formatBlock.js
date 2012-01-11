@@ -198,7 +198,7 @@
         }
       }
 
-      if (wysihtml5.commands.support(element, command)) {
+      if (wysihtml5.commands.support(command)) {
         _execCommand(doc, command, nodeName || DEFAULT_NODE_NAME, className);
         return;
       }

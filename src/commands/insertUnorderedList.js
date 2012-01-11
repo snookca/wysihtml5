@@ -9,7 +9,7 @@
           tempElement,
           list;
 
-      if (wysihtml5.commands.support(element, command)) {
+      if (wysihtml5.commands.support(command)) {
         doc.execCommand(command, false, null);
       } else {
         selectedNode = wysihtml5.selection.getSelectedNode(doc);

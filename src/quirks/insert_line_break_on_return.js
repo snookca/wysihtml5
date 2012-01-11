@@ -63,7 +63,7 @@
     }
     
     if (keyCode === wysihtml5.ENTER_KEY) {
-      wysihtml5.commands.exec(element, "insertLineBreak");
+      wysihtml5.commands.exec("insertLineBreak");
       event.preventDefault();
     }
   }

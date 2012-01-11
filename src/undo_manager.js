@@ -1,9 +1,14 @@
+/**
+ * Undo Manager for wysihtml5
+ * slightly inspired by http://rniwa.com/editing/undomanager.html#the-undomanager-interface
+ */
 (function(wysihtml5) {
-  var Z_KEY     = 90,
-      Y_KEY     = 89,
-      UNDO_HTML = '<span id="_wysihtml5-undo" class="_wysihtml5-temp">' + wysihtml5.INVISIBLE_SPACE + '</span>',
-      REDO_HTML = '<span id="_wysihtml5-redo" class="_wysihtml5-temp">' + wysihtml5.INVISIBLE_SPACE + '</span>',
-      dom       = wysihtml5.dom;
+  var Z_KEY               = 90,
+      Y_KEY               = 89,
+      MAX_HISTORY_ENTRIES = 40,
+      UNDO_HTML           = '<span id="_wysihtml5-undo" class="_wysihtml5-temp">' + wysihtml5.INVISIBLE_SPACE + '</span>',
+      REDO_HTML           = '<span id="_wysihtml5-redo" class="_wysihtml5-temp">' + wysihtml5.INVISIBLE_SPACE + '</span>',
+      dom                 = wysihtml5.dom;
   
   function cleanTempElements(doc) {
     var tempElement;
@@ -17,7 +22,13 @@
     constructor: function(editor) {
       this.editor = editor;
       this.composerElement = editor.composer.element;
-      this._observe();
+      this.history = [this.editor.composer.getValue()];
+      this.position = 1;
+      
+      // Undo manager currently only supported in browsers who have the insertHTML command (not IE)
+      if (wysihtml5.commands.support("insertHTML")) {
+        this._observe();
+      }
     },
     
     _observe: function() {
@@ -62,7 +73,10 @@
           if (that.composerElement.lastChild) {
             wysihtml5.selection.setAfter(that.composerElement.lastChild);
           }
+          
+          // enable undo button in context menu
           doc.execCommand("insertHTML", false, UNDO_HTML);
+          // enable redo button in context menu
           doc.execCommand("insertHTML", false, REDO_HTML);
           doc.execCommand("undo", false, null);
         });
@@ -84,13 +98,49 @@
         }
       });
       
+      this.editor
+        .observe("newword:composer", function() {
+          that.transact();
+        })
+        
+        .observe("beforecommand:composer", function() {
+          that.transact();
+        });
+    },
+    
+    transact: function() {
+      var html = this.editor.composer.getValue();
+      if (html == this.history[this.position - 1]) {
+        return;
+      }
+      
+      var length = this.history.length = this.position;
+      if (length > MAX_HISTORY_ENTRIES) {
+        this.history.shift();
+        this.position--;
+      }
+      
+      this.position++;
+      this.history.push(html);
     },
     
     undo: function() {
+      this.transact();
+      
+      if (this.position <= 1) {
+        return;
+      }
+      
+      this.editor.composer.setValue(this.history[--this.position - 1]);
       this.editor.fire("undo:composer");
     },
     
     redo: function() {
+      if (this.position >= this.history.length) {
+        return;
+      }
+      
+      this.editor.composer.setValue(this.history[++this.position - 1]);
       this.editor.fire("redo:composer");
     }
   });

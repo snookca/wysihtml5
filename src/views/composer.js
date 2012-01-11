@@ -119,6 +119,9 @@
 
       // Make sure that our external range library is initialized
       window.rangy.init();
+      
+      // Make sure commands are ready
+      wysihtml5.commands.initialize(this.parent);
 
       dom.copyAttributes([
         "className", "spellcheck", "title", "lang", "dir", "accessKey"
@@ -146,9 +149,9 @@
       if (placeholderText) {
         dom.simulatePlaceholder(this.parent, this, placeholderText);
       }
-
+      
       // Make sure that the browser avoids using inline styles whenever possible
-      wysihtml5.commands.exec(this.element, "styleWithCSS", false);
+      wysihtml5.commands.exec("styleWithCSS", false);
 
       this._initAutoLinking();
       this._initObjectResizing();
@@ -189,7 +192,7 @@
       var supportsDisablingOfAutoLinking = browser.canDisableAutoLinking(),
           supportsAutoLinking            = browser.doesAutoLinkingInContentEditable();
       if (supportsDisablingOfAutoLinking) {
-        wysihtml5.commands.exec(this.element, "autoUrlDetect", false);
+        wysihtml5.commands.exec("autoUrlDetect", false);
       }
 
       if (!this.config.autoLink) {
@@ -259,7 +262,7 @@
           propertiesLength  = properties.length,
           element           = this.element;
       
-      wysihtml5.commands.exec(element, "enableObjectResizing", this.config.allowObjectResizing);
+      wysihtml5.commands.exec("enableObjectResizing", this.config.allowObjectResizing);
 
       if (this.config.allowObjectResizing) {
          // IE sets inline styles after resizing objects

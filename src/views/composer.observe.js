@@ -80,7 +80,7 @@
       }
       if (data) {
         element.focus();
-        wysihtml5.commands.exec(element, "insertHTML", data);
+        wysihtml5.commands.exec("insertHTML", data);
         that.parent.fire("paste").fire("paste:composer");
         event.stopPropagation();
         event.preventDefault();
@@ -119,7 +119,7 @@
       var keyCode  = event.keyCode,
           command  = shortcuts[keyCode];
       if ((event.ctrlKey || event.metaKey) && command) {
-        wysihtml5.commands.exec(element, command);
+        wysihtml5.commands.exec(command);
         event.preventDefault();
       }
     });
