@@ -70,14 +70,13 @@
     _getDialog: function(link, command) {
       var that          = this,
           dialogElement = this.container.querySelector("[data-wysihtml5-dialog='" + command + "']"),
-          sandboxDoc    = this.composer.sandbox.getDocument(),
           dialog,
           caretBookmark;
       if (dialogElement) {
         dialog = new wysihtml5.toolbar.Dialog(link, dialogElement);
 
         dialog.observe("show", function() {
-          caretBookmark = wysihtml5.selection.getBookmark(sandboxDoc);
+          caretBookmark = wysihtml5.selection.getBookmark();
 
           that.editor.fire("show:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
         });

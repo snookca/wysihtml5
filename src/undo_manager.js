@@ -6,6 +6,7 @@
   var Z_KEY               = 90,
       Y_KEY               = 89,
       MAX_HISTORY_ENTRIES = 40,
+      CARET_HOLDER        = "wysihtml5-caret-holder",
       UNDO_HTML           = '<span id="_wysihtml5-undo" class="_wysihtml5-temp">' + wysihtml5.INVISIBLE_SPACE + '</span>',
       REDO_HTML           = '<span id="_wysihtml5-redo" class="_wysihtml5-temp">' + wysihtml5.INVISIBLE_SPACE + '</span>',
       dom                 = wysihtml5.dom;
@@ -69,7 +70,7 @@
       //  => When the first element disappears from the dom tree then we know the user clicked "undo" in the context menu
       dom.observe(this.composerElement, "contextmenu", function() {
         cleanUp();
-        wysihtml5.selection.executeAndRestoreSimple(doc, function() {
+        wysihtml5.selection.executeAndRestoreSimple(function() {
           if (that.composerElement.lastChild) {
             wysihtml5.selection.setAfter(that.composerElement.lastChild);
           }
@@ -121,7 +122,7 @@
       }
       
       this.position++;
-      this.history.push(html);
+      this.history.push({ html: html });
     },
     
     undo: function() {

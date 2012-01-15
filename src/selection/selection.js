@@ -50,15 +50,26 @@
   
   wysihtml5.selection = {
     PLACEHOLDER_TEXT: PLACEHOLDER_TEXT,
-
+    
+    /**
+     * Setup selection for editor
+     *
+     * @param {Object} doc Document object of the context
+     */
+    initialize: function(doc) {
+      // Make sure that our external range library is initialized
+      window.rangy.init();
+      
+      this.doc = doc;
+    },
+    
     /**
      * Get the current selection as a bookmark to be able to later restore it
      *
-     * @param {Object} doc Document object of the context
      * @return {Object} An object that represents the current selection
      */
-    getBookmark: function(doc) {
-      var range = this.getRange(doc);
+    getBookmark: function() {
+      var range = this.getRange();
       return range && range.cloneRange();
     },
 
@@ -83,7 +94,7 @@
      *    wysihtml5.selection.setBefore(myElement);
      */
     setBefore: function(node) {
-      var range = rangy.createRange(node.ownerDocument);
+      var range = rangy.createRange(this.doc);
       range.setStartBefore(node);
       range.setEndBefore(node);
       return this.setSelection(range);
@@ -97,7 +108,7 @@
      *    wysihtml5.selection.setBefore(myElement);
      */
     setAfter: function(node) {
-      var range = rangy.createRange(node.ownerDocument);
+      var range = rangy.createRange(this.doc);
       range.setStartAfter(node);
       range.setEndAfter(node);
       return this.setSelection(range);
@@ -111,7 +122,7 @@
      *    wysihtml5.selection.selectNode(document.getElementById("my-image"));
      */
     selectNode: function(node) {
-      var range           = rangy.createRange(node.ownerDocument),
+      var range           = rangy.createRange(this.doc),
           isElement       = node.nodeType === wysihtml5.ELEMENT_NODE,
           canHaveHTML     = "canHaveHTML" in node ? node.canHaveHTML : (node.nodeName !== "IMG"),
           content         = isElement ? node.innerHTML : node.data,
@@ -143,42 +154,41 @@
     /**
      * Get the node which contains the selection
      *
-     * @param {Object} document Document object of the context where to select
      * @param {Boolean} [controlRange] (only IE) Whether it should return the selected ControlRange element when the selection type is a "ControlRange"
      * @return {Object} The node that contains the caret
      * @example
-     *    var nodeThatContainsCaret = wysihtml5.selection.getSelectedNode(document);
+     *    var nodeThatContainsCaret = wysihtml5.selection.getSelectedNode();
      */
-    getSelectedNode: function(doc, controlRange) {
+    getSelectedNode: function(controlRange) {
       var selection,
           range;
 
-      if (controlRange && doc.selection && doc.selection.type === "Control") {
-        range = doc.selection.createRange();
+      if (controlRange && this.doc.selection && this.doc.selection.type === "Control") {
+        range = this.doc.selection.createRange();
         if (range && range.length) {
           return range.item(0);
         }
       }
 
-      selection = this.getSelection(doc);
+      selection = this.getSelection(this.doc);
       if (selection.focusNode === selection.anchorNode) {
         return selection.focusNode;
       } else {
-        range = this.getRange(doc);
-        return range ? range.commonAncestorContainer : doc.body;
+        range = this.getRange(this.doc);
+        return range ? range.commonAncestorContainer : this.doc.body;
       }
     },
 
-    executeAndRestore: function(doc, method, restoreScrollPosition) {
+    executeAndRestore: function(method, restoreScrollPosition) {
       if (!window.getSelection) {
-        return this.executeAndRestoreSimple(doc, method);
+        return this.executeAndRestoreSimple(method);
       }
 
-      var body                = doc.body,
+      var body                = this.doc.body,
           oldScrollTop        = body.scrollTop,
           oldScrollLeft       = body.scrollLeft,
-          range               = this.getRange(doc),
-          caretPlaceholder    = _createPlaceholderNode(doc),
+          range               = this.getRange(),
+          caretPlaceholder    = _createPlaceholderNode(this.doc),
           newCaretPlaceholder,
           newRange;
 
@@ -199,10 +209,10 @@
 
       // range.detach();
 
-      newCaretPlaceholder = _findPlaceholderNode(doc);
+      newCaretPlaceholder = _findPlaceholderNode(this.doc);
 
       if (newCaretPlaceholder) {
-        newRange = rangy.createRange(doc);
+        newRange = rangy.createRange(this.doc);
         newRange.selectNode(newCaretPlaceholder);
         newRange.deleteContents();
         this.setSelection(newRange);
@@ -223,8 +233,9 @@
      * Different approach of preserving the selection (doesn't modify the dom)
      * Takes all text nodes in the selection and saves the selection position in the first and last one
      */
-    executeAndRestoreSimple: function(doc, method) {
-      var range = this.getRange(doc),
+    executeAndRestoreSimple: function(method) {
+      var range = this.getRange(),
+          body  = this.doc.body,
           newRange,
           firstNode,
           lastNode,
@@ -233,7 +244,7 @@
 
       // Nothing selected, execute and say goodbye
       if (!range) {
-        method(doc.body, doc.body);
+        method(body, body);
         return;
       }
 
@@ -255,7 +266,7 @@
         setTimeout(function() { throw e; }, 0);
       }
 
-      newRange = rangy.createRange(doc);
+      newRange = rangy.createRange(this.doc);
       try { newRange.setStart(rangeBackup.startContainer, rangeBackup.startOffset); } catch(e1) {}
       try { newRange.setEnd(rangeBackup.endContainer, rangeBackup.endOffset); } catch(e2) {}
       try { this.setSelection(newRange); } catch(e3) {}
@@ -264,13 +275,12 @@
     /**
      * Insert html at the caret position and move the cursor after the inserted html
      *
-     * @param {Object} doc Document object of the context where to insert the html
      * @param {String} html HTML string to insert
      * @example
-     *    wysihtml5.selection.insertHTML(document, "<p>foobar</p>");
+     *    wysihtml5.selection.insertHTML("<p>foobar</p>");
      */
-    insertHTML: function(doc, html) {
-      var range     = rangy.createRange(doc),
+    insertHTML: function(html) {
+      var range     = rangy.createRange(this.doc),
           node      = range.createContextualFragment(html),
           lastChild = node.lastChild;
       this.insertNode(node);
@@ -287,7 +297,7 @@
      *    wysihtml5.selection.insertNode(document.createTextNode("foobar"));
      */
     insertNode: function(node) {
-      var range = this.getRange(node.ownerDocument);
+      var range = this.getRange();
       if (range) {
         range.insertNode(node);
       } else {
@@ -301,7 +311,7 @@
      * @param {Object} node The node to surround the selected elements with
      */
     surround: function(node) {
-      var range = this.getRange(node.ownerDocument);
+      var range = this.getRange();
       if (!range) {
         return;
       }
@@ -326,7 +336,7 @@
      *    wysihtml5.selection.scrollIntoView(element);
      */
     scrollIntoView: function(element) {
-      var doc           = element.ownerDocument,
+      var doc           = this.doc,
           hasScrollBars = doc.documentElement.scrollHeight > doc.documentElement.offsetHeight,
           tempElement   = doc._wysihtml5ScrollIntoViewElement = doc._wysihtml5ScrollIntoViewElement || (function() {
             var element = doc.createElement("span");
@@ -349,29 +359,29 @@
     /**
      * Select line where the caret is in
      */
-    selectLine: function(doc) {
+    selectLine: function() {
       if (wysihtml5.browser.supportsSelectionModify()) {
-        this._selectLine_W3C(doc);
-      } else if (doc.selection) {
-        this._selectLine_MSIE(doc);
+        this._selectLine_W3C();
+      } else if (this.doc.selection) {
+        this._selectLine_MSIE();
       }
     },
 
     /**
      * See https://developer.mozilla.org/en/DOM/Selection/modify
      */
-    _selectLine_W3C: function(doc) {
-      var win = doc.defaultView,
+    _selectLine_W3C: function() {
+      var win       = this.doc.defaultView,
           selection = win.getSelection();
       selection.modify("extend", "left", "lineboundary");
       selection.modify("extend", "right", "lineboundary");
     },
 
-    _selectLine_MSIE: function(doc) {
-      var range       = doc.selection.createRange(),
+    _selectLine_MSIE: function() {
+      var range       = this.doc.selection.createRange(),
           rangeTop    = range.boundingTop,
           rangeHeight = range.boundingHeight,
-          scrollWidth = doc.body.scrollWidth,
+          scrollWidth = this.doc.body.scrollWidth,
           rangeBottom,
           rangeEnd,
           measureNode,
@@ -385,7 +395,7 @@
       if (rangeTop === 0) {
         // Don't know why, but when the selection ends at the end of a line
         // range.boundingTop is 0
-        measureNode = doc.createElement("span");
+        measureNode = this.doc.createElement("span");
         this.insertNode(measureNode);
         rangeTop = measureNode.offsetTop;
         measureNode.parentNode.removeChild(measureNode);
@@ -403,7 +413,7 @@
       // Investigate the following in order to handle multi line selections
       // rangeBottom = rangeTop + (rangeHeight ? (rangeHeight - 1) : 0);
       rangeBottom = rangeTop;
-      rangeEnd = doc.selection.createRange();
+      rangeEnd = this.doc.selection.createRange();
       for (j=scrollWidth; j>=0; j--) {
         try {
           rangeEnd.moveToPoint(j, rangeBottom);
@@ -415,13 +425,13 @@
       range.select();
     },
 
-    getText: function(doc) {
-      var selection = this.getSelection(doc);
+    getText: function() {
+      var selection = this.getSelection();
       return selection ? selection.toString() : "";
     },
 
-    getNodes: function(doc, nodeType, filter) {
-      var range = this.getRange(doc);
+    getNodes: function(nodeType, filter) {
+      var range = this.getRange();
       if (range) {
         return range.getNodes([nodeType], filter);
       } else {
@@ -429,18 +439,17 @@
       }
     },
 
-    getRange: function(doc) {
-      var selection = this.getSelection(doc);
+    getRange: function() {
+      var selection = this.getSelection();
       return selection && selection.rangeCount && selection.getRangeAt(0);
     },
 
-    getSelection: function(doc) {
-      return rangy.getSelection(doc.defaultView || doc.parentWindow);
+    getSelection: function() {
+      return rangy.getSelection(this.doc.defaultView || this.doc.parentWindow);
     },
 
     setSelection: function(range) {
-      var doc       = (range.startContainer || range.endContainer).ownerDocument,
-          win       = doc.defaultView || doc.parentWindow,
+      var win       = this.doc.defaultView || this.doc.parentWindow,
           selection = rangy.getSelection(win);
       return selection.setSingleRange(range);
     }

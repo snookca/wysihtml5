@@ -12,14 +12,14 @@
       if (wysihtml5.commands.support(command)) {
         doc.execCommand(command, false, null);
       } else {
-        selectedNode = wysihtml5.selection.getSelectedNode(doc);
+        selectedNode = wysihtml5.selection.getSelectedNode();
         list = wysihtml5.dom.getParentElement(selectedNode, { nodeName: ["UL", "OL"] });
 
         if (!list) {
           tempElement = doc.createElement("span");
           wysihtml5.selection.surround(tempElement);
           isEmpty = tempElement.innerHTML === "" || tempElement.innerHTML === wysihtml5.INVISIBLE_SPACE;
-          wysihtml5.selection.executeAndRestoreSimple(doc, function() {
+          wysihtml5.selection.executeAndRestoreSimple(function() {
             list = wysihtml5.dom.convertToList(tempElement, "ul");
           });
 
@@ -29,7 +29,7 @@
           return;
         }
 
-        wysihtml5.selection.executeAndRestoreSimple(doc, function() {
+        wysihtml5.selection.executeAndRestoreSimple(function() {
           if (list.nodeName === "UL") {
             // Unwrap list
             // <ul><li>foo</li><li>bar</li></ul>

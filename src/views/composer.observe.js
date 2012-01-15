@@ -126,7 +126,7 @@
 
     // --------- Make sure that when pressing backspace/delete on selected images deletes the image and it's anchor ---------
     dom.observe(element, "keydown", function(event) {
-      var target  = wysihtml5.selection.getSelectedNode(element.ownerDocument, true),
+      var target  = wysihtml5.selection.getSelectedNode(true),
           keyCode = event.keyCode,
           parent;
       if (target && target.nodeName === "IMG" && (keyCode === wysihtml5.BACKSPACE_KEY || keyCode === wysihtml5.DELETE_KEY)) { // 8 => backspace, 46 => delete

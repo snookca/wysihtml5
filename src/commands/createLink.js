@@ -86,7 +86,7 @@
 
       if (anchors) {
         // Selection contains links
-        wysihtml5.selection.executeAndRestore(doc, function() {
+        wysihtml5.selection.executeAndRestore(function() {
           _removeFormat(element, anchors);
         });
       } else {
