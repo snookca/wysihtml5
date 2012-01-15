@@ -70,6 +70,19 @@
       this.base();
     },
 
+    focus: function(setToEnd) {
+      this.base();
+      
+      var lastChild = this.element.lastChild;
+      if (setToEnd && lastChild) {
+        if (lastChild.nodeName === "BR") {
+          selection.setBefore(this.element.lastChild);
+        } else {
+          selection.setAfter(this.element.lastChild);
+        }
+      }
+    },
+
     getTextContent: function() {
       return dom.getTextContent(this.element);
     },

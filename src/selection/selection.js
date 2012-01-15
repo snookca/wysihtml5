@@ -438,7 +438,7 @@
         return [];
       }
     },
-
+    
     getRange: function() {
       var selection = this.getSelection();
       return selection && selection.rangeCount && selection.getRangeAt(0);

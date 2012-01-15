@@ -6,7 +6,6 @@
   var Z_KEY               = 90,
       Y_KEY               = 89,
       MAX_HISTORY_ENTRIES = 40,
-      CARET_HOLDER        = "wysihtml5-caret-holder",
       UNDO_HTML           = '<span id="_wysihtml5-undo" class="_wysihtml5-temp">' + wysihtml5.INVISIBLE_SPACE + '</span>',
       REDO_HTML           = '<span id="_wysihtml5-redo" class="_wysihtml5-temp">' + wysihtml5.INVISIBLE_SPACE + '</span>',
       dom                 = wysihtml5.dom;
@@ -110,8 +109,10 @@
     },
     
     transact: function() {
-      var html = this.editor.composer.getValue();
-      if (html == this.history[this.position - 1]) {
+      var previousHtml  = this.history[this.position - 1],
+          currentHtml   = this.editor.composer.getValue();
+      
+      if (currentHtml == previousHtml) {
         return;
       }
       
@@ -122,7 +123,7 @@
       }
       
       this.position++;
-      this.history.push({ html: html });
+      this.history.push(currentHtml);
     },
     
     undo: function() {
@@ -132,7 +133,7 @@
         return;
       }
       
-      this.editor.composer.setValue(this.history[--this.position - 1]);
+      this.set(this.history[--this.position - 1]);
       this.editor.fire("undo:composer");
     },
     
@@ -141,8 +142,13 @@
         return;
       }
       
-      this.editor.composer.setValue(this.history[++this.position - 1]);
+      this.set(this.history[++this.position - 1]);
       this.editor.fire("redo:composer");
+    },
+    
+    set: function(html) {
+      this.editor.composer.setValue(html);
+      this.editor.focus(true);
     }
   });
 })(wysihtml5);
