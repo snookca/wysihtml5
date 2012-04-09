@@ -5317,7 +5317,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
         "XMLHttpRequest", "XDomainRequest"
       ],
       /**
-       * Properties to unset/proetect on the document object
+       * Properties to unset/protect on the document object
        */
       documentProperties  = [
         "referrer",
@@ -5817,6 +5817,10 @@ wysihtml5.quirks.cleanPastedHTML = (function() {
         }
         return;
       }
+        if (keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
+          composer.selection.surround(document.createElement('p'));
+          event.preventDefault();
+        }
 
     }
     
@@ -6928,7 +6932,7 @@ wysihtml5.Commands = Base.extend(
  */
 (function(wysihtml5) {
   var undef,
-      REG_EXP = /wysiwyg-font-size-[a-z]+/g;
+      REG_EXP = /wysiwyg-font-size-[a-z\-]+/g;
   
   wysihtml5.commands.fontSize = {
     exec: function(composer, command, size) {
@@ -7433,7 +7437,8 @@ wysihtml5.Commands = Base.extend(
       return undef;
     }
   };
-})(wysihtml5);(function(wysihtml5) {
+})(wysihtml5);
+(function(wysihtml5) {
   var undef;
   
   wysihtml5.commands.insertOrderedList = {
@@ -7630,17 +7635,14 @@ wysihtml5.Commands = Base.extend(
     }
   };
 })(wysihtml5);(function(wysihtml5) {
-  var undef,
-      REG_EXP     = /wysiwyg-text-decoration-underline/g,
-      CLASS_NAME  = "wysiwyg-text-decoration-underline";
-  
+  var undef;
   wysihtml5.commands.underline = {
     exec: function(composer, command) {
-      return wysihtml5.commands.formatInline.exec(composer, command, "span", CLASS_NAME, REG_EXP);
+      return wysihtml5.commands.formatInline.exec(composer, command, "u");
     },
 
     state: function(composer, command) {
-      return wysihtml5.commands.formatInline.state(composer, command, "span", CLASS_NAME, REG_EXP);
+      return wysihtml5.commands.formatInline.state(composer, command, "u");
     },
 
     value: function() {

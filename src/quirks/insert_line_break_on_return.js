@@ -70,12 +70,12 @@
             unwrap(composer.selection.getSelectedNode());
           }, 0);
         } 
-        if (keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
-          composer.commands.exec("insertParagraph");
-          event.preventDefault();
-        }
         return;
       }
+        if (keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
+          composer.selection.surround(document.createElement('p'));
+          event.preventDefault();
+        }
 
     }
     
