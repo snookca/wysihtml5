@@ -29,21 +29,28 @@
 
     function keyDown(event) {
       var keyCode = event.keyCode;
-      if (event.shiftKey || (keyCode !== wysihtml5.ENTER_KEY && keyCode !== wysihtml5.BACKSPACE_KEY)) {
-        return;
-      }
 
       var element         = event.target,
           selectedNode    = composer.selection.getSelectedNode(),
           blockElement    = dom.getParentElement(selectedNode, { nodeName: USE_NATIVE_LINE_BREAK_WHEN_CARET_INSIDE_TAGS }, 4);
       if (blockElement) {
+
+        if (blockElement.nodeName === "LI" && keyCode === 9) {
+          event.preventDefault();
+          if (event.shiftKey) {
+            composer.commands.exec("outdent");
+          } else {
+            composer.commands.exec("indent");
+          }
+        }
+
         // Some browsers create <p> elements after leaving a list
         // check after keydown of backspace and return whether a <p> got inserted and unwrap it
         if (blockElement.nodeName === "LI" && (keyCode === wysihtml5.ENTER_KEY || keyCode === wysihtml5.BACKSPACE_KEY)) {
           setTimeout(function() {
             var selectedNode = composer.selection.getSelectedNode(),
                 list,
-                div;
+                p;
             if (!selectedNode) {
               return;
             }
@@ -63,13 +70,13 @@
             unwrap(composer.selection.getSelectedNode());
           }, 0);
         } 
+        if (keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
+          composer.commands.exec("insertParagraph");
+          event.preventDefault();
+        }
         return;
       }
 
-      if (keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
-        composer.commands.exec("insertLineBreak");
-        event.preventDefault();
-      }
     }
     
     // keypress doesn't fire when you hit backspace

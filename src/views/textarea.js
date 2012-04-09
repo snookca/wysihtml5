@@ -27,16 +27,8 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     this.element.value = html;
   },
   
-  hasPlaceholderSet: function() {
-    var supportsPlaceholder = wysihtml5.browser.supportsPlaceholderAttributeOn(this.element),
-        placeholderText     = this.element.getAttribute("placeholder") || null,
-        value               = this.element.value,
-        isEmpty             = !value;
-    return (supportsPlaceholder && isEmpty) || (value === placeholderText);
-  },
-  
   isEmpty: function() {
-    return !wysihtml5.lang.string(this.element.value).trim() || this.hasPlaceholderSet();
+    return !wysihtml5.lang.string(this.element.value).trim();
   },
   
   _observe: function() {

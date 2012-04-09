@@ -33,7 +33,6 @@ JS_FILES = src/wysihtml5.js \
   src/dom/sandbox.js \
   src/dom/set_attributes.js \
   src/dom/set_styles.js \
-  src/dom/simulate_placeholder.js \
   src/dom/text_content.js \
   src/quirks/clean_pasted_html.js \
   src/quirks/ensure_proper_clearing.js \

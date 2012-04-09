@@ -142,10 +142,6 @@
       return this.currentView.isEmpty();
     },
     
-    hasPlaceholderSet: function() {
-      return this.currentView.hasPlaceholderSet();
-    },
-    
     parse: function(htmlOrElement) {
       var returnValue = this.config.parser(htmlOrElement, this.config.parserRules, this.composer.sandbox.getDocument(), true);
       if (typeof(htmlOrElement) === "object") {

@@ -4364,10 +4364,10 @@ wysihtml5.dom.getAsDom = (function() {
     context = context || document;
     var tempElement;
     if (typeof(html) === "object" && html.nodeType) {
-      tempElement = context.createElement("div");
+      tempElement = context.createElement("p");
       tempElement.appendChild(html);
     } else if (wysihtml5.browser.supportsHTML5Tags(context)) {
-      tempElement = context.createElement("div");
+      tempElement = context.createElement("p");
       tempElement.innerHTML = html;
     } else {
       _ensureHTML5Compatibility(context);
@@ -4375,7 +4375,8 @@ wysihtml5.dom.getAsDom = (function() {
     }
     return tempElement;
   };
-})();/**
+})();
+/**
  * Walks the dom tree from the given node up until it finds a match
  * Designed for optimal performance.
  *
@@ -5116,7 +5117,8 @@ wysihtml5.dom.parse = (function() {
   };
   
   return parse;
-})();/**
+})();
+/**
  * Checks for empty text node childs and removes them
  *
  * @param {Element} node The element in which to cleanup
@@ -5554,47 +5556,7 @@ wysihtml5.dom.replaceWithChildNodes = function(node) {
       }
     }
   };
-};/**
- * Simulate HTML5 placeholder attribute
- *
- * Needed since
- *    - div[contentEditable] elements don't support it
- *    - older browsers (such as IE8 and Firefox 3.6) don't support it at all
- *
- * @param {Object} parent Instance of main wysihtml5.Editor class
- * @param {Element} view Instance of wysihtml5.views.* class
- * @param {String} placeholderText
- *
- * @example
- *    wysihtml.dom.simulatePlaceholder(this, composer, "Foobar");
- */
-(function(dom) {
-  dom.simulatePlaceholder = function(editor, view, placeholderText) {
-    var CLASS_NAME = "placeholder",
-        unset = function() {
-          if (view.hasPlaceholderSet()) {
-            view.clear();
-          }
-          dom.removeClass(view.element, CLASS_NAME);
-        },
-        set = function() {
-          if (view.isEmpty()) {
-            view.setValue(placeholderText);
-            dom.addClass(view.element, CLASS_NAME);
-          }
-        };
-
-    editor
-      .observe("set_placeholder", set)
-      .observe("unset_placeholder", unset)
-      .observe("focus:composer", unset)
-      .observe("paste:composer", unset)
-      .observe("blur:composer", set);
-
-    set();
-  };
-})(wysihtml5.dom);
-(function(dom) {
+};(function(dom) {
   var documentElement = document.documentElement;
   if ("textContent" in documentElement) {
     dom.setTextContent = function(element, text) {
@@ -5808,21 +5770,28 @@ wysihtml5.quirks.cleanPastedHTML = (function() {
 
     function keyDown(event) {
       var keyCode = event.keyCode;
-      if (event.shiftKey || (keyCode !== wysihtml5.ENTER_KEY && keyCode !== wysihtml5.BACKSPACE_KEY)) {
-        return;
-      }
 
       var element         = event.target,
           selectedNode    = composer.selection.getSelectedNode(),
           blockElement    = dom.getParentElement(selectedNode, { nodeName: USE_NATIVE_LINE_BREAK_WHEN_CARET_INSIDE_TAGS }, 4);
       if (blockElement) {
+
+        if (blockElement.nodeName === "LI" && keyCode === 9) {
+          event.preventDefault();
+          if (event.shiftKey) {
+            composer.commands.exec("outdent");
+          } else {
+            composer.commands.exec("indent");
+          }
+        }
+
         // Some browsers create <p> elements after leaving a list
         // check after keydown of backspace and return whether a <p> got inserted and unwrap it
         if (blockElement.nodeName === "LI" && (keyCode === wysihtml5.ENTER_KEY || keyCode === wysihtml5.BACKSPACE_KEY)) {
           setTimeout(function() {
             var selectedNode = composer.selection.getSelectedNode(),
                 list,
-                div;
+                p;
             if (!selectedNode) {
               return;
             }
@@ -5842,19 +5811,20 @@ wysihtml5.quirks.cleanPastedHTML = (function() {
             unwrap(composer.selection.getSelectedNode());
           }, 0);
         } 
+        if (keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
+          composer.commands.exec("insertParagraph");
+          event.preventDefault();
+        }
         return;
       }
 
-      if (keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
-        composer.commands.exec("insertLineBreak");
-        event.preventDefault();
-      }
     }
     
     // keypress doesn't fire when you hit backspace
     dom.observe(composer.element.ownerDocument, "keydown", keyDown);
   };
-})(wysihtml5);/**
+})(wysihtml5);
+/**
  * Force rerendering of a given element
  * Needed to fix display misbehaviors of IE
  *
@@ -7972,12 +7942,6 @@ wysihtml5.views.View = Base.extend(
     },
 
     focus: function(setToEnd) {
-      // IE 8 fires the focus event after .focus()
-      // This is needed by our simulate_placeholder.js to work
-      // therefore we clear it ourselves this time
-      if (wysihtml5.browser.doesAsyncFocus() && this.hasPlaceholderSet()) {
-        this.clear();
-      }
       
       this.base();
       
@@ -7995,16 +7959,11 @@ wysihtml5.views.View = Base.extend(
       return dom.getTextContent(this.element);
     },
 
-    hasPlaceholderSet: function() {
-      return this.getTextContent() == this.textarea.element.getAttribute("placeholder");
-    },
-
     isEmpty: function() {
       var innerHTML               = this.element.innerHTML,
           elementsWithVisualValue = "blockquote, ul, ol, img, embed, object, table, iframe, svg, video, audio, button, input, select, textarea";
       return innerHTML === ""              || 
              innerHTML === this.CARET_HACK ||
-             this.hasPlaceholderSet()      ||
              (this.getTextContent() === "" && !this.element.querySelector(elementsWithVisualValue));
     },
 
@@ -8064,14 +8023,6 @@ wysihtml5.views.View = Base.extend(
         dom.addClass(this.iframe, name);
       }
 
-      // Simulate html5 placeholder attribute on contentEditable element
-      var placeholderText = typeof(this.config.placeholder) === "string"
-        ? this.config.placeholder
-        : this.textarea.element.getAttribute("placeholder");
-      if (placeholderText) {
-        dom.simulatePlaceholder(this.parent, this, placeholderText);
-      }
-      
       // Make sure that the browser avoids using inline styles whenever possible
       this.commands.exec("styleWithCSS", false);
 
@@ -8214,7 +8165,8 @@ wysihtml5.views.View = Base.extend(
       new wysihtml5.UndoManager(this.parent);
     }
   });
-})(wysihtml5);(function(wysihtml5) {
+})(wysihtml5);
+(function(wysihtml5) {
   var dom             = wysihtml5.dom,
       doc             = document,
       win             = window,
@@ -8703,16 +8655,8 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     this.element.value = html;
   },
   
-  hasPlaceholderSet: function() {
-    var supportsPlaceholder = wysihtml5.browser.supportsPlaceholderAttributeOn(this.element),
-        placeholderText     = this.element.getAttribute("placeholder") || null,
-        value               = this.element.value,
-        isEmpty             = !value;
-    return (supportsPlaceholder && isEmpty) || (value === placeholderText);
-  },
-  
   isEmpty: function() {
-    return !wysihtml5.lang.string(this.element.value).trim() || this.hasPlaceholderSet();
+    return !wysihtml5.lang.string(this.element.value).trim();
   },
   
   _observe: function() {
@@ -8739,7 +8683,8 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
       });
     });
   }
-});/**
+});
+/**
  * Toolbar Dialog
  *
  * @param {Element} link The toolbar link which causes the dialog to show up
@@ -9424,10 +9369,6 @@ wysihtml5.views.Textarea = wysihtml5.views.View.extend(
     
     isEmpty: function() {
       return this.currentView.isEmpty();
-    },
-    
-    hasPlaceholderSet: function() {
-      return this.currentView.hasPlaceholderSet();
     },
     
     parse: function(htmlOrElement) {

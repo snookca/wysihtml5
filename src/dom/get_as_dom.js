@@ -50,10 +50,10 @@ wysihtml5.dom.getAsDom = (function() {
     context = context || document;
     var tempElement;
     if (typeof(html) === "object" && html.nodeType) {
-      tempElement = context.createElement("div");
+      tempElement = context.createElement("p");
       tempElement.appendChild(html);
     } else if (wysihtml5.browser.supportsHTML5Tags(context)) {
-      tempElement = context.createElement("div");
+      tempElement = context.createElement("p");
       tempElement.innerHTML = html;
     } else {
       _ensureHTML5Compatibility(context);

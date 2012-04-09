@@ -68,12 +68,6 @@
     },
 
     focus: function(setToEnd) {
-      // IE 8 fires the focus event after .focus()
-      // This is needed by our simulate_placeholder.js to work
-      // therefore we clear it ourselves this time
-      if (wysihtml5.browser.doesAsyncFocus() && this.hasPlaceholderSet()) {
-        this.clear();
-      }
       
       this.base();
       
@@ -91,16 +85,11 @@
       return dom.getTextContent(this.element);
     },
 
-    hasPlaceholderSet: function() {
-      return this.getTextContent() == this.textarea.element.getAttribute("placeholder");
-    },
-
     isEmpty: function() {
       var innerHTML               = this.element.innerHTML,
           elementsWithVisualValue = "blockquote, ul, ol, img, embed, object, table, iframe, svg, video, audio, button, input, select, textarea";
       return innerHTML === ""              || 
              innerHTML === this.CARET_HACK ||
-             this.hasPlaceholderSet()      ||
              (this.getTextContent() === "" && !this.element.querySelector(elementsWithVisualValue));
     },
 
@@ -160,14 +149,6 @@
         dom.addClass(this.iframe, name);
       }
 
-      // Simulate html5 placeholder attribute on contentEditable element
-      var placeholderText = typeof(this.config.placeholder) === "string"
-        ? this.config.placeholder
-        : this.textarea.element.getAttribute("placeholder");
-      if (placeholderText) {
-        dom.simulatePlaceholder(this.parent, this, placeholderText);
-      }
-      
       // Make sure that the browser avoids using inline styles whenever possible
       this.commands.exec("styleWithCSS", false);
 
