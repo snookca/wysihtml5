@@ -114,8 +114,6 @@
         "security":           "restricted",
         "allowtransparency":  "true",
         "frameborder":        0,
-        "width":              0,
-        "height":             0,
         "marginwidth":        0,
         "marginheight":       0
       }).on(iframe);

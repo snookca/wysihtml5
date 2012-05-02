@@ -18,25 +18,6 @@
        * Styles to copy from textarea to the iframe
        */
       BOX_FORMATTING = [
-        "background-color",
-        "border-collapse",
-        "border-bottom-color", "border-bottom-style", "border-bottom-width",
-        "border-left-color", "border-left-style", "border-left-width",
-        "border-right-color", "border-right-style", "border-right-width",
-        "border-top-color", "border-top-style", "border-top-width",
-        "clear", "display", "float",
-        "margin-bottom", "margin-left", "margin-right", "margin-top",
-        "outline-color", "outline-offset", "outline-width", "outline-style",
-        "padding-left", "padding-right", "padding-top", "padding-bottom",
-        "position", "top", "left", "right", "bottom", "z-index",
-        "vertical-align", "text-align",
-        "-webkit-box-sizing", "-moz-box-sizing", "-ms-box-sizing", "box-sizing",
-        "-webkit-box-shadow", "-moz-box-shadow", "-ms-box-shadow","box-shadow",
-        "-webkit-border-top-right-radius", "-moz-border-radius-topright", "border-top-right-radius",
-        "-webkit-border-bottom-right-radius", "-moz-border-radius-bottomright", "border-bottom-right-radius",
-        "-webkit-border-bottom-left-radius", "-moz-border-radius-bottomleft", "border-bottom-left-radius",
-        "-webkit-border-top-left-radius", "-moz-border-radius-topleft", "border-top-left-radius",
-        "width", "height"
       ],
       /**
        * Styles to sync while the window gets resized
@@ -121,19 +102,12 @@
       textareaElement.blur();
     }
   
-    // --------- iframe styles (has to be set before editor styles, otherwise IE9 sets wrong fontFamily on blurStylesHost) ---------
-    dom.copyStyles(BOX_FORMATTING).from(textareaElement).to(this.iframe).andTo(this.blurStylesHost);
-  
-    // --------- editor styles ---------
-    dom.copyStyles(TEXT_FORMATTING).from(textareaElement).to(this.element).andTo(this.blurStylesHost);
   
     // --------- apply standard rules ---------
     dom.insertCSS(ADDITIONAL_CSS_RULES).into(this.element.ownerDocument);
   
     // --------- :focus styles ---------
     focusWithoutScrolling(textareaElement);
-    dom.copyStyles(BOX_FORMATTING).from(textareaElement).to(this.focusStylesHost);
-    dom.copyStyles(TEXT_FORMATTING).from(textareaElement).to(this.focusStylesHost);
   
     // Make sure that we don't change the display style of the iframe when copying styles oblur/onfocus
     // this is needed for when the change_view event is fired where the iframe is hidden and then
@@ -167,16 +141,6 @@
       });
     }
   
-    // --------- Sync focus/blur styles ---------
-    this.parent.observe("focus:composer", function() {
-      dom.copyStyles(boxFormattingStyles) .from(that.focusStylesHost).to(that.iframe);
-      dom.copyStyles(TEXT_FORMATTING)     .from(that.focusStylesHost).to(that.element);
-    });
-
-    this.parent.observe("blur:composer", function() {
-      dom.copyStyles(boxFormattingStyles) .from(that.blurStylesHost).to(that.iframe);
-      dom.copyStyles(TEXT_FORMATTING)     .from(that.blurStylesHost).to(that.element);
-    });
   
     return this;
   };
