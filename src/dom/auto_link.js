@@ -46,6 +46,8 @@
    */
   function _convertUrlsToLinks(str) {
     return str.replace(URL_REG_EXP, function(match, url) {
+      var videoid, imgid;
+        
       var punctuation = (url.match(TRAILING_CHAR_REG_EXP) || [])[1] || "",
           opening     = BRACKETS[punctuation];
       url = url.replace(TRAILING_CHAR_REG_EXP, "");
@@ -62,6 +64,16 @@
       // Add http prefix if necessary
       if (realUrl.substr(0, 4) === "www.") {
         realUrl = "http://" + realUrl;
+      }
+      
+      // do an image embed
+      if (displayUrl.match(/(\.jpg|\.gif|\.png)$/)) {
+        return '<'+'img src="' + displayUrl + '" alt="">';
+      }
+      // do a youtube video embed
+      if (videoid = (displayUrl.match(/youtube\.com\/watch\?v\=([a-zA-Z0-9-]+)/) || displayUrl.match(/youtu\.be\/([a-zA-Z0-9-]+)/))) {
+        videoid = videoid[1];
+        return '<'+'iframe width="420" height="315" src="http://www.youtube.com/embed/' + videoid + '" frameborder="0" allowfullscreen></'+'iframe>';
       }
       
       return '<a href="' + realUrl + '">' + displayUrl + '</a>' + punctuation;

@@ -3965,6 +3965,8 @@ wysihtml5.browser = (function() {
    */
   function _convertUrlsToLinks(str) {
     return str.replace(URL_REG_EXP, function(match, url) {
+      var videoid, imgid;
+        
       var punctuation = (url.match(TRAILING_CHAR_REG_EXP) || [])[1] || "",
           opening     = BRACKETS[punctuation];
       url = url.replace(TRAILING_CHAR_REG_EXP, "");
@@ -3981,6 +3983,16 @@ wysihtml5.browser = (function() {
       // Add http prefix if necessary
       if (realUrl.substr(0, 4) === "www.") {
         realUrl = "http://" + realUrl;
+      }
+      
+      // do an image embed
+      if (displayUrl.match(/(\.jpg|\.gif|\.png)$/)) {
+        return '<'+'img src="' + displayUrl + '" alt="">';
+      }
+      // do a youtube video embed
+      if (videoid = (displayUrl.match(/youtube\.com\/watch\?v\=([a-zA-Z0-9-]+)/) || displayUrl.match(/youtu\.be\/([a-zA-Z0-9-]+)/))) {
+        videoid = videoid[1];
+        return '<'+'iframe width="420" height="315" src="http://www.youtube.com/embed/' + videoid + '" frameborder="0" allowfullscreen></'+'iframe>';
       }
       
       return '<a href="' + realUrl + '">' + displayUrl + '</a>' + punctuation;
@@ -4057,7 +4069,8 @@ wysihtml5.browser = (function() {
   
   // Reveal url reg exp to the outside
   wysihtml5.dom.autoLink.URL_REG_EXP = URL_REG_EXP;
-})(wysihtml5);(function(wysihtml5) {
+})(wysihtml5);
+(function(wysihtml5) {
   var supportsClassList = wysihtml5.browser.supportsClassList(),
       api               = wysihtml5.dom;
   
@@ -8072,6 +8085,7 @@ wysihtml5.views.View = Base.extend(
         this.parent.observe("newword:composer", function() {
           that.selection.executeAndRestore(function(startContainer, endContainer) {
             dom.autoLink(endContainer.parentNode);
+            that.parent.fire('change');
           });
         });
       }

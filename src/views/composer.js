@@ -202,6 +202,7 @@
         this.parent.observe("newword:composer", function() {
           that.selection.executeAndRestore(function(startContainer, endContainer) {
             dom.autoLink(endContainer.parentNode);
+            that.parent.fire('change');
           });
         });
       }

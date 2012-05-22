@@ -132,7 +132,7 @@
 <div id="log"></div>
 
 <small>powered by <a href="https://github.com/xing/wysihtml5" target="_blank">wysihtml5</a>.</small>
-
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 <script src="../parser_rules/advanced.js"></script>
 <script src="../dist/wysihtml5-0.3.0_rc2.js"></script>
 <script>
@@ -150,6 +150,8 @@
     })
     .on("focus", function() {
       log.innerHTML += "<div>focus</div>";
+    })
+    .on('beforecommand:composer', function(){
     })
     .on("blur", function() {
       log.innerHTML += "<div>blur</div>";
