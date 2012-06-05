@@ -115,7 +115,7 @@
       if (commandObj && commandObj.dialog && !commandObj.state) {
         commandObj.dialog.show();
       } else {
-        this._execCommand(command, commandValue);
+        return this._execCommand(command, commandValue);
       }
     },
 
@@ -123,8 +123,9 @@
       // Make sure that composer is focussed (false => don't move caret to the end)
       this.editor.focus(false);
 
-      this.composer.commands.exec(command, commandValue);
+      var retval = this.composer.commands.exec(command, commandValue);
       this._updateLinkStates();
+      return retval;
     },
 
     execAction: function(action) {
@@ -148,14 +149,6 @@
           length    = links.length,
           i         = 0;
       
-      for (; i<length; i++) {
-        // 'javascript:;' and unselectable=on Needed for IE, but done in all browsers to make sure that all get the same css applied
-        // (you know, a:link { ... } doesn't match anchors with missing href attribute)
-        dom.setAttributes({
-          href:         "javascript:;",
-          unselectable: "on"
-        }).on(links[i]);
-      }
 
       // Needed for opera
       dom.delegate(container, "[data-wysihtml5-command]", "mousedown", function(event) { event.preventDefault(); });
@@ -164,7 +157,10 @@
         var link          = this,
             command       = link.getAttribute("data-wysihtml5-command"),
             commandValue  = link.getAttribute("data-wysihtml5-command-value");
-        that.execCommand(command, commandValue);
+        var retval = that.execCommand(command, commandValue);
+        if (!retval) {
+            event.stopPropagation();
+        }
         event.preventDefault();
       });
 
