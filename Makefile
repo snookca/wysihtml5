@@ -44,6 +44,7 @@ JS_FILES = src/wysihtml5.js \
   src/commands.js \
   src/commands/bold.js \
   src/commands/createLink.js \
+  src/commands/table.js \
   src/commands/fontSize.js \
   src/commands/foreColor.js \
   src/commands/formatBlock.js \
@@ -82,7 +83,9 @@ bundle:
 
 minify:
 	@@echo "Minifying... (this requires node.js)"
-	@@node build/minify.js ${JS_OUTPUT}
+	@@node build/minify-uglify.js ${JS_OUTPUT}
+	@@echo "Copying to Admin2"
+	@@cp dist/wysihtml5-0.3.0_rc2.min.js ~/Sites/shopify/admin2/app/assets/batman/admin2/vendor/ 
 	@@echo "Done."
 
 unittest: bundle
