@@ -18,6 +18,7 @@
   var CLASS_NAME_COMMAND_DISABLED   = "wysihtml5-command-disabled",
       CLASS_NAME_COMMANDS_DISABLED  = "wysihtml5-commands-disabled",
       CLASS_NAME_COMMAND_ACTIVE     = "wysihtml5-command-active",
+      CLASS_NAME_ACTION_ACTIVE      = "wysihtml5-action-active",
       dom                           = wysihtml5.dom;
   
   wysihtml5.toolbar.Toolbar = Base.extend(
@@ -42,11 +43,12 @@
     },
 
     _getLinks: function(type) {
-      var links   = this[type + "Links"] = wysihtml5.lang.array(this.container.querySelectorAll("a[data-wysihtml5-" + type + "]")).get(),
+      var links   = this[type + "Links"] = wysihtml5.lang.array(this.container.querySelectorAll("[data-wysihtml5-" + type + "]")).get(),
           length  = links.length,
           i       = 0,
           mapping = this[type + "Mapping"] = {},
           link,
+          group,
           name,
           value,
           dialog;
@@ -54,10 +56,12 @@
         link    = links[i];
         name    = link.getAttribute("data-wysihtml5-" + type);
         value   = link.getAttribute("data-wysihtml5-" + type + "-value");
+        group   = this.container.querySelector("[data-wysihtml5-" + type + "-group='" + name + "']");
         dialog  = this._getDialog(link, name);
         
         mapping[name + ":" + value] = {
           link:   link,
+          group:  group,
           name:   name,
           value:  value,
           dialog: dialog,
@@ -201,8 +205,10 @@
     _updateLinkStates: function() {
       var element           = this.composer.element,
           commandMapping    = this.commandMapping,
+          actionMapping     = this.actionMapping,
           i,
           state,
+          action,
           command;
       // every millisecond counts... this is executed quite often
       for (i in commandMapping) {
@@ -210,6 +216,9 @@
         if (this.commandsDisabled) {
           state = false;
           dom.removeClass(command.link, CLASS_NAME_COMMAND_ACTIVE);
+          if (command.group) {
+            dom.removeClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
+          }
           if (command.dialog) {
             command.dialog.hide();
           }
@@ -223,6 +232,9 @@
             state = state.length === 1 ? state[0] : true;
           }
           dom.removeClass(command.link, CLASS_NAME_COMMAND_DISABLED);
+          if (command.group) {
+            dom.removeClass(command.group, CLASS_NAME_COMMAND_DISABLED);
+          }
         }
 
         if (command.state === state) {
@@ -232,6 +244,9 @@
         command.state = state;
         if (state) {
           dom.addClass(command.link, CLASS_NAME_COMMAND_ACTIVE);
+          if (command.group) {
+            dom.addClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
+          }
           if (command.dialog) {
             if (typeof(state) === "object") {
               command.dialog.show(state);
@@ -241,8 +256,24 @@
           }
         } else {
           dom.removeClass(command.link, CLASS_NAME_COMMAND_ACTIVE);
+          if (command.group) {
+            dom.removeClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
+          }
           if (command.dialog) {
             command.dialog.hide();
+          }
+        }
+      }
+      
+      for (i in actionMapping) {
+        action = actionMapping[i];
+        
+        if (action.name === "change_view") {
+          action.state = this.editor.currentView === this.editor.textarea;
+          if (action.state) {
+            dom.addClass(action.link, CLASS_NAME_ACTION_ACTIVE);
+          } else {
+            dom.removeClass(action.link, CLASS_NAME_ACTION_ACTIVE);
           }
         }
       }

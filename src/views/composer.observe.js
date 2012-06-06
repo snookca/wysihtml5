@@ -136,7 +136,7 @@
     dom.observe(element, "keydown", function(event) {
       var keyCode  = event.keyCode,
           command  = shortcuts[keyCode];
-      if ((event.ctrlKey || event.metaKey) && command) {
+      if ((event.ctrlKey || event.metaKey) && !event.altKey && command) {
         that.commands.exec(command);
         event.preventDefault();
       }
@@ -174,9 +174,11 @@
       if (nodeName !== "A" && nodeName !== "IMG") {
         return;
       }
-
-      title = titlePrefixes[nodeName] + (target.getAttribute("href") || target.getAttribute("src"));
-      target.setAttribute("title", title);
+      var hasTitle = target.hasAttribute("title");
+      if(!hasTitle){
+        title = titlePrefixes[nodeName] + (target.getAttribute("href") || target.getAttribute("src"));
+        target.setAttribute("title", title);
+      }
     });
   };
 })(wysihtml5);

@@ -33,20 +33,24 @@ wysihtml5.Commands = Base.extend(
    */
   exec: function(command, value) {
     var obj     = wysihtml5.commands[command],
-        method  = obj && obj.exec;
+        args    = wysihtml5.lang.array(arguments).get(),
+        method  = obj && obj.exec,
+        result  = null;
     
     this.editor.fire("beforecommand:composer");
     
     if (method) {
-      return method.call(obj, this.composer, command, value);
+      args.unshift(this.composer);
+      result = method.apply(obj, args);
     } else {
       try {
         // try/catch for buggy firefox
-        return this.doc.execCommand(command, false, value);
+        result = this.doc.execCommand(command, false, value);
       } catch(e) {}
     }
     
     this.editor.fire("aftercommand:composer");
+    return result;
   },
   
   /**
@@ -61,9 +65,11 @@ wysihtml5.Commands = Base.extend(
    */
   state: function(command, commandValue) {
     var obj     = wysihtml5.commands[command],
+        args    = wysihtml5.lang.array(arguments).get(),
         method  = obj && obj.state;
     if (method) {
-      return method.call(obj, this.composer, command, commandValue);
+      args.unshift(this.composer);
+      return method.apply(obj, args);
     } else {
       try {
         // try/catch for buggy firefox
