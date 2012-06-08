@@ -172,7 +172,7 @@
       }
       dom.addClass(this.link, CLASS_NAME_OPENED);
       this.container.style.display = "";
-      this.fire("show");
+      this.fire("show", {dialog:this});
       if (firstField && !elementToChange) {
         try {
           firstField.focus();
