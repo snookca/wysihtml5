@@ -177,7 +177,15 @@
       editor.observe("focus:composer", function() {
         that.bookmark = null;
         clearInterval(that.interval);
-        that.interval = setInterval(function() { that._updateLinkStates(); }, 500);
+        var selectionState = that.composer.selection.getBookmark();
+        that.interval = setInterval(function() { 
+            var newSelectionState = that.composer.selection.getBookmark();
+            if (newSelectionState.startOffset !== selectionState.startOffset && newSelectionState.endOffset !== selectionState.endOffset) {
+                editor.fire('selectionchange', 'composer', newSelectionState);
+                selectionState = newSelectionState;
+                that._updateLinkStates(); 
+            } 
+        }, 100);
       });
 
       editor.observe("blur:composer", function() {
